@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Coding Learning System",
-  description: "Interactive Python Hello World judge"
+  title: "Mikkaiser Coder",
+  description: "Python coding challenges with Judge0"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
