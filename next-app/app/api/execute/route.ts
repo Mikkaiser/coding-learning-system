@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { buildProgramForChallenge, isCorrectForChallenge } from "@/lib/challenges/grader";
+import {
+  buildProgram,
+  isCorrect
+} from "@/lib/challenges/grader";
+import { getChallenge } from "@/lib/challenges/catalog";
 import type { ChallengeId } from "@/lib/challenges/types";
 import type { ChallengeTestCase } from "@/lib/challenges/types";
 
@@ -16,7 +20,7 @@ type Judge0SubmissionResult = {
   compile_output: string | null;
 };
 
-type Challenge2StdoutJson = {
+type FunctionsStdoutJson = {
   allPassed: boolean;
   tests: Array<{
     name: string;
@@ -27,22 +31,33 @@ type Challenge2StdoutJson = {
 };
 
 /**
- * Judge0 may return stdout/stderr as plain UTF-8 (base64_encoded=false) or base64
- * (base64_encoded=true / implicit default). Decode only when the value looks like base64.
+ * Judge0 is polled with `base64_encoded=false`, so stdout/stderr are plain UTF-8 text.
+ * Do not auto-decode as Base64: short lines like "Alex" match length % 4 and the Base64
+ * alphabet and decode to garbage (mojibake in the UI "Got" column).
  */
 function decodeJudge0TextField(value: string | null | undefined): string {
   if (value == null || value === "") return "";
-  const s = String(value);
-  const compact = s.replace(/\s/g, "");
-  if (compact.length === 0) return "";
-  const looksLikeBase64 =
-    compact.length % 4 === 0 && /^[A-Za-z0-9+/]+=*$/.test(compact);
-  if (!looksLikeBase64) return s;
-  try {
-    return Buffer.from(compact, "base64").toString("utf8");
-  } catch {
-    return s;
+  return String(value);
+}
+
+async function pollUntilDone(
+  judge0Root: string,
+  token: string
+): Promise<Judge0SubmissionResult> {
+  const maxAttempts = 20;
+  const delayMs = 500;
+  for (let i = 0; i < maxAttempts; i++) {
+    const pollUrl = new URL(`submissions/${token}`, judge0Root);
+    pollUrl.searchParams.set("base64_encoded", "false");
+    const pollRes = await fetch(pollUrl.toString());
+    if (!pollRes.ok) throw new Error("Poll request failed");
+    const result = (await pollRes.json()) as Judge0SubmissionResult;
+    if (result.status.id !== 1 && result.status.id !== 2) return result;
+    if (i < maxAttempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
+  throw new Error("Submission timed out after polling");
 }
 
 export async function POST(req: Request) {
@@ -63,21 +78,30 @@ export async function POST(req: Request) {
 
   const code = (body as { code?: unknown })?.code;
   const challengeIdRaw = (body as { challengeId?: unknown })?.challengeId;
-  const challengeId: ChallengeId =
-    challengeIdRaw === 2 || challengeIdRaw === "2" ? 2 : 1;
+  const challengeId = String(challengeIdRaw ?? "") as ChallengeId;
 
   if (typeof code !== "string" || code.trim().length === 0) {
     return NextResponse.json({ error: "Missing code." }, { status: 400 });
   }
 
-  const program = buildProgramForChallenge(challengeId, code);
+  const challenge = getChallenge(challengeId);
+  if (!challenge) {
+    return NextResponse.json({ error: "Unknown challenge." }, { status: 400 });
+  }
 
-  // Trailing slash so `new URL("submissions", base)` resolves under the API path (not /submissions at host root).
+  if (challenge.kind === "mcq") {
+    return NextResponse.json(
+      { error: "This challenge is not executed on the server." },
+      { status: 400 }
+    );
+  }
+
+  const program = buildProgram(challenge, code);
+
   const judge0Root = judge0BaseUrl.endsWith("/")
     ? judge0BaseUrl
     : `${judge0BaseUrl}/`;
   const submitUrl = new URL("submissions", judge0Root);
-  submitUrl.searchParams.set("wait", "true");
   submitUrl.searchParams.set("base64_encoded", "false");
 
   const submitRes = await fetch(submitUrl.toString(), {
@@ -85,7 +109,9 @@ export async function POST(req: Request) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       language_id: 71,
-      source_code: program
+      source_code: program,
+      enable_per_process_and_thread_memory_limit: true,
+      enable_per_process_and_thread_time_limit: true
     })
   });
 
@@ -97,11 +123,21 @@ export async function POST(req: Request) {
     );
   }
 
-  const result = (await submitRes.json()) as Judge0SubmissionResult;
-  if (!result?.status) {
+  const submitData = (await submitRes.json()) as { token?: string };
+  if (!submitData?.token) {
     return NextResponse.json(
-      { error: "No result returned from Judge0." },
+      { error: "No token returned from Judge0." },
       { status: 502 }
+    );
+  }
+
+  let result: Judge0SubmissionResult;
+  try {
+    result = await pollUntilDone(judge0Root, submitData.token);
+  } catch {
+    return NextResponse.json(
+      { error: "Code execution timed out." },
+      { status: 504 }
     );
   }
 
@@ -112,11 +148,11 @@ export async function POST(req: Request) {
   const status = result.status;
 
   let tests: ChallengeTestCase[] | undefined;
-  let correct = isCorrectForChallenge(challengeId, stdout);
+  let correct = isCorrect(challenge, stdout);
 
-  if (challengeId === 2 && !stderr.trim()) {
+  if (challenge.kind === "functions" && !stderr.trim()) {
     try {
-      const parsed = JSON.parse(stdout.trim()) as Challenge2StdoutJson;
+      const parsed = JSON.parse(stdout.trim()) as FunctionsStdoutJson;
       if (typeof parsed?.allPassed === "boolean" && Array.isArray(parsed?.tests)) {
         tests = parsed.tests.map((t) => ({
           name: String(t.name),
@@ -127,24 +163,24 @@ export async function POST(req: Request) {
         correct = parsed.allPassed && tests.every((t) => t.passed);
       }
     } catch {
-      // Fallback to string-based correctness when stdout isn't JSON
+      // keep string-based correctness
     }
   }
 
-  if (challengeId === 1) {
+  if (challenge.kind === "output" || challenge.kind === "fix") {
+    const exp = challenge.expected ?? "";
     tests = [
       {
-        name: "Exact output",
+        name: exp.startsWith("__") ? "Pattern" : "Exact output",
         passed: correct,
-        expected: "Hello, World!",
+        expected: exp.startsWith("__") ? exp : exp,
         got: stdout.trim()
       }
     ];
   }
 
-  // Challenge 2: hide raw JSON harness output when structured tests are returned.
   const stdoutForClient =
-    challengeId === 2 && tests && tests.length > 0 ? "" : stdout;
+    challenge.kind === "functions" && tests && tests.length > 0 ? "" : stdout;
 
   return NextResponse.json({
     stdout: stdoutForClient,
@@ -154,4 +190,3 @@ export async function POST(req: Request) {
     tests
   });
 }
-

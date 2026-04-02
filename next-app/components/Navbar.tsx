@@ -33,7 +33,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3">
         <Link
           href="/challenges"
-          className="flex items-center gap-3 text-base font-semibold tracking-tight text-fg"
+          className="flex items-center text-base font-semibold tracking-tight text-fg"
         >
           <Image
             src={logo}
@@ -44,13 +44,11 @@ export function Navbar() {
             sizes="(max-width: 768px) 140px, 180px"
             className="h-8 w-auto sm:h-9"
           />
-          <span className="leading-none text-fg">Mikkaiser Coder</span>
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
             <>
               <Avatar username={user.username} role={user.role} />
-              <span className="hidden text-base text-muted sm:inline">{user.username}</span>
               {user.role === "admin" ? (
                 <Link
                   href="/admin/dashboard"

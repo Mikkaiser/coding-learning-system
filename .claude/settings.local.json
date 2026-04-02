@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(curl -s -X POST \"http://localhost:2358/submissions?wait=true&base64_encoded=false\" -H \"Content-Type: application/json\" -d '{\"\"language_id\"\": 71, \"\"source_code\"\": \"\"print\\(\\\\\"\"hello\\\\\"\"\\)\"\"}')",
+      "Bash(curl -s -X POST \"http://localhost:2358/submissions?wait=true&base64_encoded=false\" -H \"Content-Type: application/json\" -d '{\"\"language_id\"\": 71, \"\"source_code\"\": \"\"print\\(\\\\\"\"hello\\\\\"\"\\)\"\", \"\"enable_per_process_and_thread_memory_limit\"\": true}')",
+      "Bash(docker exec:*)",
+      "Bash(curl -s -X POST \"http://localhost:2358/submissions?wait=true&base64_encoded=false\" -H \"Content-Type: application/json\" -d '{\"\"language_id\"\": 71, \"\"source_code\"\": \"\"print\\(\\\\\"\"hello\\\\\"\"\\)\"\", \"\"enable_per_process_and_thread_memory_limit\"\": true, \"\"enable_per_process_and_thread_time_limit\"\": true}')",
+      "Bash(curl -s -X POST \"http://localhost:2358/submissions?base64_encoded=false\" -H \"Content-Type: application/json\" -d '{\"\"language_id\"\": 71, \"\"source_code\"\": \"\"print\\(\\\\\"\"hello\\\\\"\"\\)\"\", \"\"enable_per_process_and_thread_memory_limit\"\": true, \"\"enable_per_process_and_thread_time_limit\"\": true}')",
+      "Bash(curl -s \"http://localhost:2358/submissions/875ceb1c-ce4f-4201-b5bd-30d471c64826?base64_encoded=false\")",
+      "Bash(grep -E \"server|\\\\.js$\")"
+    ]
+  }
+}

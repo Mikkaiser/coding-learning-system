@@ -25,6 +25,8 @@ export const challengeCompletions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     challengeId: text("challenge_id").notNull(),
+    /** Last submitted source when the challenge was marked complete (code challenges only). */
+    submittedCode: text("submitted_code"),
     completedAt: timestamp("completed_at").defaultNow().notNull()
   },
   (t) => ({

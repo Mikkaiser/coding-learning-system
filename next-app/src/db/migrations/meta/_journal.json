@@ -8,6 +8,20 @@
       "when": 1775049419625,
       "tag": "0000_military_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775050000000,
+      "tag": "0001_rename_challenge_ids",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775060000000,
+      "tag": "0002_add_submitted_code",
+      "breakpoints": true
     }
   ]
 }

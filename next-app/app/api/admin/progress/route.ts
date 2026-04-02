@@ -4,7 +4,7 @@ import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 import { getAttemptsPerChallenge, getTotalAttempts } from "@/lib/attempts";
 import { getCompletedChallengeIds } from "@/lib/completions";
 import { getLastLoginAt } from "@/lib/login-history";
-import { CHALLENGES } from "@/lib/challenges/catalog";
+import { CHALLENGES, MODULES } from "@/lib/challenges/catalog";
 import { listStudents } from "@/lib/users";
 
 async function requireAdmin() {
@@ -53,5 +53,18 @@ export async function GET() {
 
   const withRank = sorted.map((r, idx) => ({ ...r, rank: idx + 1 }));
 
-  return NextResponse.json({ students: withRank });
+  const moduleStats = MODULES.map((mod) => {
+    const challengeIds = mod.challenges.map((c) => c.id);
+    const studentsCompleted = withRank.filter((s) =>
+      challengeIds.every((id) => s.completedChallengeIds.includes(id))
+    ).length;
+    return {
+      moduleId: mod.id,
+      title: mod.title,
+      totalChallenges: challengeIds.length,
+      studentsCompleted
+    };
+  });
+
+  return NextResponse.json({ students: withRank, moduleStats });
 }

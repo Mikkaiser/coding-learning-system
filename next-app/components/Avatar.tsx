@@ -14,7 +14,7 @@ export function Avatar({ username, role }: Props) {
 
   return (
     <div
-      className={`flex h-control-sm w-control-sm shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-1 ${ring}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-1 ${ring}`}
       aria-hidden="true"
     >
       {initials}

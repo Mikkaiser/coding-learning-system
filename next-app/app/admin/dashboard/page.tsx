@@ -17,6 +17,13 @@ type StudentProgress = {
   rank: number;
 };
 
+type ModuleCompletionStat = {
+  moduleId: number;
+  title: string;
+  totalChallenges: number;
+  studentsCompleted: number;
+};
+
 function ProgressBar({ percent }: { percent: number }) {
   return (
     <div className="h-2 w-full overflow-hidden rounded-full border border-border bg-bg">
@@ -30,18 +37,26 @@ function ProgressBar({ percent }: { percent: number }) {
 
 export default function AdminDashboardPage() {
   const [students, setStudents] = useState<StudentProgress[]>([]);
+  const [moduleStats, setModuleStats] = useState<ModuleCompletionStat[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/progress")
       .then((r) => r.json())
-      .then((d: { students?: StudentProgress[]; error?: string }) => {
-        if (!Array.isArray(d.students)) {
-          setError(d.error ?? "Failed to load dashboard.");
-          return;
+      .then(
+        (d: {
+          students?: StudentProgress[];
+          moduleStats?: ModuleCompletionStat[];
+          error?: string;
+        }) => {
+          if (!Array.isArray(d.students)) {
+            setError(d.error ?? "Failed to load dashboard.");
+            return;
+          }
+          setStudents(d.students);
+          setModuleStats(Array.isArray(d.moduleStats) ? d.moduleStats : []);
         }
-        setStudents(d.students);
-      })
+      )
       .catch(() => setError("Failed to load dashboard."));
   }, []);
 
@@ -92,7 +107,46 @@ export default function AdminDashboardPage() {
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {moduleStats.length ? (
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold text-fg">Module completion</h2>
+            <p className="mt-1 text-sm text-muted">
+              How many students have finished every challenge in each module.
+            </p>
+            <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-[32rem] text-left text-sm">
+                <thead className="border-b border-border bg-surface">
+                  <tr>
+                    <th className="px-4 py-3 font-medium text-muted">Module</th>
+                    <th className="px-4 py-3 font-medium text-muted">Title</th>
+                    <th className="px-4 py-3 font-medium text-muted">Challenges</th>
+                    <th className="px-4 py-3 font-medium text-muted">Students done</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {moduleStats.map((m) => (
+                    <tr key={m.moduleId} className="border-b border-border/60 last:border-0">
+                      <td className="px-4 py-3 font-mono text-fg">{m.moduleId}</td>
+                      <td className="px-4 py-3 text-fg">{m.title}</td>
+                      <td className="px-4 py-3 text-muted">{m.totalChallenges}</td>
+                      <td className="px-4 py-3 text-fg">
+                        {m.studentsCompleted}
+                        {students.length ? (
+                          <span className="text-muted">
+                            {" "}
+                            / {students.length}
+                          </span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
           {students.map((s) => (
             <div key={s.id} className="card p-5">
               <div className="flex items-center justify-between gap-3">

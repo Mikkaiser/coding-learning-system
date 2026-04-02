@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
-import { getCompletedChallengeIds } from "@/lib/completions";
+import { getChallengeProgress } from "@/lib/completions";
 
 export async function GET() {
   const token = cookies().get(AUTH_COOKIE_NAME)?.value;
@@ -12,7 +12,7 @@ export async function GET() {
     return NextResponse.json({ completedChallengeIds: [] });
   }
 
-  const completedChallengeIds = await getCompletedChallengeIds(user.id);
-  return NextResponse.json({ completedChallengeIds });
+  const { challengeIds, solutions } = await getChallengeProgress(user.id);
+  return NextResponse.json({ completedChallengeIds: challengeIds, solutions });
 }
 

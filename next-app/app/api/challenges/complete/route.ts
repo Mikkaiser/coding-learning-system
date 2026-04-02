@@ -23,6 +23,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing challengeId." }, { status: 400 });
   }
 
-  const list = await markComplete(user.id, challengeId);
+  const codeRaw = (body as { code?: unknown })?.code;
+  const submittedCode = typeof codeRaw === "string" ? codeRaw : undefined;
+
+  const list = await markComplete(user.id, challengeId, {
+    submittedCode
+  });
   return NextResponse.json({ completedChallengeIds: list });
 }
