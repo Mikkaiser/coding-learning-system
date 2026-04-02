@@ -20,7 +20,7 @@ type UiState =
 function Spinner() {
   return (
     <div
-      className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300/30 border-t-zinc-200"
+      className="h-5 w-5 animate-spin rounded-full border-2 border-border/70 border-t-brand-secondary"
       aria-label="Loading"
     />
   );
@@ -30,7 +30,7 @@ function LockIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-6 w-6 text-zinc-300"
+      className="h-6 w-6 text-muted"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -45,10 +45,10 @@ function LockIcon() {
 function SuccessCheckIcon() {
   return (
     <div className="shrink-0 p-0.5" aria-hidden="true">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 ring-1 ring-emerald-400/50">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-secondary/15 ring-1 ring-brand-secondary/35">
         <svg
           viewBox="0 0 24 24"
-          className="h-4 w-4 text-emerald-300"
+          className="h-4 w-4 text-brand-secondary"
           fill="none"
           stroke="currentColor"
           strokeWidth="2.5"
@@ -70,18 +70,25 @@ function ChallengeTestsSummary({
   ui: UiState;
 }) {
   const expectedHello = "Hello, World!";
-  const helloScenario: ChallengeTestCase = {
+  const helloFallback: ChallengeTestCase = {
     name: "Exact output",
     passed:
       ui.kind === "correct" ||
       (ui.kind === "wrong" && ui.stdout.trim() === expectedHello),
     expected: expectedHello,
-    got: ui.kind === "wrong" ? ui.stdout : ui.kind === "correct" ? (ui.stdout ?? "") : ""
+    got:
+      ui.kind === "wrong"
+        ? ui.stdout
+        : ui.kind === "correct"
+          ? (ui.stdout ?? "")
+          : ""
   };
 
   const tests: ChallengeTestCase[] =
     challengeId === 1
-      ? [helloScenario]
+      ? ui.kind === "wrong" || ui.kind === "correct"
+        ? (ui.tests?.length ? ui.tests : [helloFallback])
+        : []
       : ui.kind === "wrong"
         ? ui.tests ?? []
         : ui.kind === "correct"
@@ -90,12 +97,24 @@ function ChallengeTestsSummary({
 
   if (!tests.length) return null;
 
+  function gotCell(t: ChallengeTestCase) {
+    const g = t.got ?? "";
+    if (g !== "") return g;
+    if (
+      challengeId === 1 &&
+      (ui.kind === "wrong" || ui.kind === "correct")
+    ) {
+      return (ui.stdout ?? "").trim();
+    }
+    return "";
+  }
+
   return (
     <>
-      <div className="mt-2 text-xs text-zinc-300/80">Test scenarios:</div>
-      <div className="mt-2 overflow-hidden rounded border border-zinc-800">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-zinc-950 text-zinc-300">
+      <div className="mt-2 text-sm text-muted/80">Test scenarios:</div>
+      <div className="mt-2 overflow-hidden rounded border border-border">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-bg text-muted">
             <tr>
               <th className="px-3 py-2">Test</th>
               <th className="px-3 py-2">Result</th>
@@ -103,16 +122,16 @@ function ChallengeTestsSummary({
               <th className="px-3 py-2">Got</th>
             </tr>
           </thead>
-          <tbody className="bg-zinc-950 text-zinc-100">
+          <tbody className="bg-bg text-fg">
             {tests.map((t) => (
               <tr
                 key={t.name}
-                className={t.passed ? "text-emerald-200" : "text-yellow-100"}
+                className={t.passed ? "text-brand-secondary" : "text-warning"}
               >
                 <td className="px-3 py-2 font-medium">{t.name}</td>
                 <td className="px-3 py-2">{t.passed ? "PASS" : "FAIL"}</td>
                 <td className="px-3 py-2 font-mono text-[11px]">{t.expected ?? ""}</td>
-                <td className="px-3 py-2 font-mono text-[11px]">{t.got ?? ""}</td>
+                <td className="px-3 py-2 font-mono text-[11px]">{gotCell(t)}</td>
               </tr>
             ))}
           </tbody>
@@ -268,13 +287,11 @@ export default function ChallengesPage() {
       <Navbar />
       <main className="mx-auto max-w-4xl px-4 py-10">
         <header className="mb-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-sm text-zinc-200">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-sm text-fg">
             <span className="font-semibold">Mikkaiser Coder</span>
           </div>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
-            Python challenges
-          </h1>
-          <p className="mt-2 text-zinc-300">
+          <h1 className="mt-4 text-[32px] font-semibold tracking-tight text-fg">Python challenges</h1>
+          <p className="mt-2 text-base text-[rgba(255,255,255,0.55)]">
             Complete each challenge to unlock the next one.
           </p>
         </header>
@@ -296,35 +313,33 @@ export default function ChallengesPage() {
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-sm text-zinc-200">
-                      <span className="font-semibold">{challenge.badge}</span>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(123,47,247,0.35)] bg-[rgba(123,47,247,0.15)] px-3 py-[3px] text-[12px] font-medium text-[#c4aaff]">
+                      <span className="font-medium">{challenge.badge}</span>
                     </div>
                     {isDone ? (
-                      <span className="rounded-full border border-emerald-700/60 bg-emerald-950/40 px-3 py-1 text-xs font-semibold text-emerald-200">
+                      <span className="rounded-full border border-brand-secondary/40 bg-brand-secondary/10 px-3 py-1 text-sm font-semibold text-brand-secondary">
                         Completed
                       </span>
                     ) : null}
                   </div>
 
                   {!unlocked ? (
-                    <span className="text-xs text-zinc-400">Locked</span>
+                    <span className="text-sm text-muted">Locked</span>
                   ) : null}
                 </div>
 
-                <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
-                  {challenge.title}
-                </h2>
-                <p className="mt-2 text-zinc-300">{challenge.instruction}</p>
+                <h2 className="text-[22px] font-medium tracking-tight text-fg">{challenge.title}</h2>
+                <p className="mt-2 text-base text-[rgba(255,255,255,0.55)] [&_*]:text-[rgba(255,255,255,0.55)]">
+                  {challenge.instruction}
+                </p>
 
                 <div className="mt-4">
-                  <div className="text-xs font-semibold text-zinc-300">
-                    Competences covered
-                  </div>
+                  <div className="text-sm font-semibold text-fg">Competences covered</div>
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {challenge.competences.map((c) => (
                       <li
                         key={c}
-                        className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1 text-xs text-zinc-200"
+                        className="rounded-full border border-[rgba(123,47,247,0.3)] bg-[rgba(123,47,247,0.12)] px-[10px] py-[3px] text-[12px] text-[rgba(200,185,255,0.9)]"
                       >
                         {c}
                       </li>
@@ -333,27 +348,40 @@ export default function ChallengesPage() {
                 </div>
 
                 {!unlocked ? (
-                  <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/30 p-6">
-                    <div className="flex items-center gap-3 text-zinc-200">
+                  <div
+                    className="mt-6 rounded-xl border border-border bg-surface/40 p-6 opacity-50"
+                    style={{ filter: "grayscale(0.3)" }}
+                  >
+                    <div className="flex items-center gap-3 text-fg">
                       <LockIcon />
                       <div>
                         <div className="text-sm font-semibold">
                           Complete the previous challenge to unlock this one.
                         </div>
-                        <div className="mt-1 text-xs text-zinc-400">
+                        <div className="mt-1 text-sm text-muted">
                           Your progress is saved automatically.
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 h-48 rounded-lg border border-zinc-800 bg-zinc-950/40" />
+                    <div className="relative mt-4 h-48 overflow-hidden rounded-lg border border-border bg-bg/40">
+                      <div
+                        className="pointer-events-none absolute inset-0 z-10 rounded-[inherit]"
+                        style={{
+                          background: "rgba(0,0,0,0.45)",
+                          backdropFilter: "blur(3px)",
+                          WebkitBackdropFilter: "blur(3px)"
+                        }}
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-                    <div className="relative overflow-hidden rounded-lg border border-zinc-800">
+                  <div className="mt-6 rounded-xl border border-border border-l-2 border-l-[#7B2FF7] bg-bg p-4">
+                    <div className="relative overflow-hidden rounded-lg border border-border bg-bg">
                       <Editor
                         height="260px"
                         defaultLanguage="python"
-                        theme="vs-dark"
+                        theme="mikkaiser-challenges"
                         value={codeById[challenge.id] ?? ""}
                         onChange={(v) =>
                           setCodeById((prev) => ({
@@ -361,6 +389,28 @@ export default function ChallengesPage() {
                             [challenge.id]: v ?? ""
                           }))
                         }
+                        beforeMount={(monaco) => {
+                          const bg = "#08080c";
+                          monaco.editor.defineTheme("mikkaiser-challenges", {
+                            base: "vs-dark",
+                            inherit: true,
+                            rules: [],
+                            colors: {
+                              "editor.background": bg,
+                              "editorGutter.background": bg,
+                              "editorLineNumber.foreground": "#ffffff33",
+                              "editorLineNumber.activeForeground": "#ffffff55",
+                              "editorCursor.foreground": "#a78bfa",
+                              "editor.foreground": "#e4e4e7",
+                              "editorWidget.background": "#121218",
+                              "editorSuggestWidget.background": "#121218",
+                              "editorHoverWidget.background": "#121218",
+                              "input.background": bg,
+                              "scrollbarSlider.background": "#ffffff22",
+                              "scrollbarSlider.hoverBackground": "#ffffff33"
+                            }
+                          });
+                        }}
                         options={{
                           minimap: { enabled: false },
                           fontSize: 14,
@@ -372,36 +422,44 @@ export default function ChallengesPage() {
                     </div>
 
                     <div className="mt-4 flex items-center justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={() => runCode(challenge.id)}
-                        disabled={isRunning}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isRunning ? (
-                          <>
-                            <Spinner />
-                            <span>Running...</span>
-                          </>
-                        ) : (
-                          isDone ? "Run again" : "Run Code"
-                        )}
-                      </button>
+                      <div className="glow-wrap glow-wrap--run inline-flex">
+                        <div className="glow" aria-hidden="true" />
+                        <div className="border-ring" aria-hidden="true">
+                          <div className="border-ring-inner" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => runCode(challenge.id)}
+                          disabled={isRunning}
+                          className="btn btn-primary relative z-0 inline-flex gap-2"
+                        >
+                          {isRunning ? (
+                            <>
+                              <Spinner />
+                              <span>Running...</span>
+                            </>
+                          ) : isDone ? (
+                            "Run again"
+                          ) : (
+                            "Run Code"
+                          )}
+                        </button>
+                      </div>
 
-                      <div className="text-xs text-zinc-400">
+                      <div className="text-sm text-muted">
                         {challenge.helperText}
                       </div>
                     </div>
 
                     {ui.kind === "loading" ? (
-                      <div className="mt-4 flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-200">
+                      <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-[#050509] px-4 py-3 text-muted">
                         <Spinner />
-                        <div className="text-sm">Running your code...</div>
+                        <div className="text-sm text-fg/80">Running your code...</div>
                       </div>
                     ) : null}
 
                     {ui.kind === "correct" ? (
-                      <div className="mt-4 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-4 py-3 text-emerald-100">
+                      <div className="mt-4 rounded-lg border border-brand-secondary/40 bg-brand-secondary/10 px-4 py-3 text-fg">
                         <div className="flex items-center gap-3">
                           <SuccessCheckIcon />
                           <div>
@@ -415,38 +473,28 @@ export default function ChallengesPage() {
                     ) : null}
 
                     {ui.kind === "wrong" ? (
-                      <div className="mt-4 rounded-lg border border-yellow-700/60 bg-yellow-950/30 px-4 py-3 text-yellow-100">
+                      <div className="mt-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-fg">
                         <div className="text-sm font-semibold">Wrong answer.</div>
                         <ChallengeTestsSummary challengeId={challenge.id} ui={ui} />
-                        {challenge.id !== 2 ? (
-                          <>
-                            <div className="mt-3 text-xs text-yellow-200/80">
-                              Your stdout:
-                            </div>
-                            <pre className="mt-1 overflow-auto rounded bg-zinc-950 px-3 py-2 text-xs text-zinc-100">
-                              {ui.stdout.length ? ui.stdout : "(empty)"}
-                            </pre>
-                          </>
-                        ) : null}
                       </div>
                     ) : null}
 
                     {ui.kind === "error" ? (
-                      <div className="mt-4 rounded-lg border border-red-700/60 bg-red-950/30 px-4 py-3 text-red-100">
+                      <div className="mt-4 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-fg">
                         <div className="text-sm font-semibold">
                           Runtime/compile error
                         </div>
-                        <div className="mt-2 text-xs text-red-200/80">
+                        <div className="mt-2 text-sm text-danger/80">
                           stderr:
                         </div>
-                        <pre className="mt-1 overflow-auto rounded bg-zinc-950 px-3 py-2 text-xs text-zinc-100">
+                        <pre className="mt-1 overflow-auto rounded bg-bg px-3 py-2 text-sm text-fg">
                           {ui.stderr.length ? ui.stderr : "(empty)"}
                         </pre>
                       </div>
                     ) : null}
 
                     {ui.kind === "failure" ? (
-                      <div className="mt-4 rounded-lg border border-red-700/60 bg-red-950/30 px-4 py-3 text-red-100">
+                      <div className="mt-4 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-fg">
                         <div className="text-sm font-semibold">
                           Request failed. Please try again.
                         </div>

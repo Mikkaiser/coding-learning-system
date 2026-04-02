@@ -19,9 +19,9 @@ type StudentProgress = {
 
 function ProgressBar({ percent }: { percent: number }) {
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full border border-zinc-800 bg-zinc-950">
+    <div className="h-2 w-full overflow-hidden rounded-full border border-border bg-bg">
       <div
-        className="h-full bg-emerald-600"
+        className="h-full bg-brand-secondary"
         style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
       />
     </div>
@@ -58,63 +58,59 @@ export default function AdminDashboardPage() {
       <main className="mx-auto max-w-5xl px-4 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
-              Admin dashboard
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400">
+            <h1 className="text-2xl font-semibold tracking-tight text-fg">Admin dashboard</h1>
+            <p className="mt-2 text-base text-muted">
               Track student progress across {totalChallenges} challenges.
             </p>
           </div>
           <a
             href="/admin/students"
-            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+            className="btn btn-secondary h-control-md px-4"
           >
             Manage students
           </a>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-zinc-800 bg-[#111] p-4">
-            <div className="text-xs font-medium text-zinc-400">Students</div>
-            <div className="mt-2 text-2xl font-semibold text-zinc-50">{students.length}</div>
+          <div className="card p-4">
+            <div className="text-sm font-medium text-muted">Students</div>
+            <div className="mt-2 text-2xl font-semibold text-fg">{students.length}</div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-[#111] p-4">
-            <div className="text-xs font-medium text-zinc-400">Class average</div>
-            <div className="mt-2 text-2xl font-semibold text-zinc-50">{classAvg}%</div>
+          <div className="card p-4">
+            <div className="text-sm font-medium text-muted">Class average</div>
+            <div className="mt-2 text-2xl font-semibold text-fg">{classAvg}%</div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-[#111] p-4">
-            <div className="text-xs font-medium text-zinc-400">Total challenges</div>
-            <div className="mt-2 text-2xl font-semibold text-zinc-50">{totalChallenges}</div>
+          <div className="card p-4">
+            <div className="text-sm font-medium text-muted">Total challenges</div>
+            <div className="mt-2 text-2xl font-semibold text-fg">{totalChallenges}</div>
           </div>
         </div>
 
         {error ? (
-          <div className="mt-6 rounded-xl border border-red-800/60 bg-red-950/30 p-4 text-sm text-red-200">
+          <div className="mt-6 rounded-xl border border-danger/40 bg-danger/10 p-4 text-base text-danger">
             {error}
           </div>
         ) : null}
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {students.map((s) => (
-            <div key={s.id} className="rounded-xl border border-zinc-800 bg-[#111] p-5">
+            <div key={s.id} className="card p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-100">{s.username}</div>
-                  <div className="mt-1 text-xs text-zinc-400">
+                  <div className="text-base font-semibold text-fg">{s.username}</div>
+                  <div className="mt-1 text-sm text-muted">
                     Rank #{s.rank} · {s.completedCount}/{s.totalChallenges} completed ·{" "}
                     {s.totalAttempts} attempts
                   </div>
                   {s.lastLogin ? (
-                    <div className="mt-1 text-xs text-zinc-500">
+                    <div className="mt-1 text-sm text-muted/80">
                       Last login: {new Date(s.lastLogin).toLocaleString()}
                     </div>
                   ) : (
-                    <div className="mt-1 text-xs text-zinc-500">Last login: —</div>
+                    <div className="mt-1 text-sm text-muted/80">Last login: —</div>
                   )}
                 </div>
-                <div className="text-sm font-semibold text-emerald-200">
-                  {s.percentComplete}%
-                </div>
+                <div className="text-base font-semibold text-brand-secondary">{s.percentComplete}%</div>
               </div>
 
               <div className="mt-3">
@@ -122,35 +118,35 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="mt-4">
-                <div className="text-xs font-semibold text-zinc-300">Completed challenges</div>
+                <div className="text-sm font-semibold text-fg">Completed challenges</div>
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {s.completedChallengeIds.length ? (
                     s.completedChallengeIds.map((id) => (
                       <li
                         key={id}
-                        className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1 text-xs text-zinc-200"
+                        className="rounded-full border border-border bg-bg px-3 py-1 text-sm text-fg"
                       >
                         {id}
                       </li>
                     ))
                   ) : (
-                    <li className="text-xs text-zinc-500">(none yet)</li>
+                    <li className="text-sm text-muted/80">(none yet)</li>
                   )}
                 </ul>
               </div>
 
               <div className="mt-4">
-                <div className="text-xs font-semibold text-zinc-300">Attempts per challenge</div>
-                <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+                <div className="text-sm font-semibold text-fg">Attempts per challenge</div>
+                <ul className="mt-2 space-y-1 text-sm text-muted">
                   {s.attemptsPerChallenge.length ? (
                     s.attemptsPerChallenge.map((a) => (
                       <li key={a.challengeId} className="flex justify-between gap-2">
-                        <span className="font-mono text-zinc-300">{a.challengeId}</span>
+                        <span className="font-mono text-fg/90">{a.challengeId}</span>
                         <span>{a.attempts}</span>
                       </li>
                     ))
                   ) : (
-                    <li className="text-zinc-500">(no attempts yet)</li>
+                    <li className="text-muted/80">(no attempts yet)</li>
                   )}
                 </ul>
               </div>

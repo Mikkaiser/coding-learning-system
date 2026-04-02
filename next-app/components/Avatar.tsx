@@ -9,12 +9,12 @@ export function Avatar({ username, role }: Props) {
   const initials = username.slice(0, 2).toUpperCase();
   const ring =
     role === "admin"
-      ? "bg-amber-500/20 text-amber-200 ring-amber-400/40"
-      : "bg-emerald-500/20 text-emerald-200 ring-emerald-400/40";
+      ? "bg-brand-secondary/15 text-brand-secondary ring-brand-secondary/35"
+      : "bg-brand-accent/15 text-brand-primary ring-brand-accent/45";
 
   return (
     <div
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-1 ${ring}`}
+      className={`flex h-control-sm w-control-sm shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-1 ${ring}`}
       aria-hidden="true"
     >
       {initials}

@@ -3,10 +3,6 @@ import { buildProgramForChallenge, isCorrectForChallenge } from "@/lib/challenge
 import type { ChallengeId } from "@/lib/challenges/types";
 import type { ChallengeTestCase } from "@/lib/challenges/types";
 
-type Judge0SubmissionResponse = {
-  token: string;
-};
-
 type Judge0Status = {
   id: number;
   description?: string;
@@ -30,17 +26,23 @@ type Challenge2StdoutJson = {
   }>;
 };
 
-function toBase64Utf8(input: string) {
-  return Buffer.from(input, "utf8").toString("base64");
-}
-
-function fromBase64Utf8(input: string | null) {
-  if (!input) return "";
-  return Buffer.from(input, "base64").toString("utf8");
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Judge0 may return stdout/stderr as plain UTF-8 (base64_encoded=false) or base64
+ * (base64_encoded=true / implicit default). Decode only when the value looks like base64.
+ */
+function decodeJudge0TextField(value: string | null | undefined): string {
+  if (value == null || value === "") return "";
+  const s = String(value);
+  const compact = s.replace(/\s/g, "");
+  if (compact.length === 0) return "";
+  const looksLikeBase64 =
+    compact.length % 4 === 0 && /^[A-Za-z0-9+/]+=*$/.test(compact);
+  if (!looksLikeBase64) return s;
+  try {
+    return Buffer.from(compact, "base64").toString("utf8");
+  } catch {
+    return s;
+  }
 }
 
 export async function POST(req: Request) {
@@ -61,7 +63,8 @@ export async function POST(req: Request) {
 
   const code = (body as { code?: unknown })?.code;
   const challengeIdRaw = (body as { challengeId?: unknown })?.challengeId;
-  const challengeId: ChallengeId = challengeIdRaw === 2 ? 2 : 1;
+  const challengeId: ChallengeId =
+    challengeIdRaw === 2 || challengeIdRaw === "2" ? 2 : 1;
 
   if (typeof code !== "string" || code.trim().length === 0) {
     return NextResponse.json({ error: "Missing code." }, { status: 400 });
@@ -69,17 +72,22 @@ export async function POST(req: Request) {
 
   const program = buildProgramForChallenge(challengeId, code);
 
-  const submitRes = await fetch(
-    `${judge0BaseUrl}/submissions?wait=false&base64_encoded=true`,
-    {
+  // Trailing slash so `new URL("submissions", base)` resolves under the API path (not /submissions at host root).
+  const judge0Root = judge0BaseUrl.endsWith("/")
+    ? judge0BaseUrl
+    : `${judge0BaseUrl}/`;
+  const submitUrl = new URL("submissions", judge0Root);
+  submitUrl.searchParams.set("wait", "true");
+  submitUrl.searchParams.set("base64_encoded", "false");
+
+  const submitRes = await fetch(submitUrl.toString(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       language_id: 71,
-      source_code: toBase64Utf8(program)
+      source_code: program
     })
-    }
-  );
+  });
 
   if (!submitRes.ok) {
     const text = await submitRes.text().catch(() => "");
@@ -89,46 +97,18 @@ export async function POST(req: Request) {
     );
   }
 
-  const submitJson = (await submitRes.json()) as Judge0SubmissionResponse;
-  const token = submitJson?.token;
-  if (!token) {
-    return NextResponse.json(
-      { error: "Judge0 did not return a token." },
-      { status: 502 }
-    );
-  }
-
-  let result: Judge0SubmissionResult | null = null;
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const pollRes = await fetch(
-      `${judge0BaseUrl}/submissions/${token}?base64_encoded=true`,
-      { method: "GET" }
-    );
-
-    if (!pollRes.ok) {
-      const text = await pollRes.text().catch(() => "");
-      return NextResponse.json(
-        { error: "Failed to poll Judge0.", details: text },
-        { status: 502 }
-      );
-    }
-
-    result = (await pollRes.json()) as Judge0SubmissionResult;
-    if (result?.status?.id && result.status.id > 2) break;
-
-    await sleep(1500);
-  }
-
-  if (!result) {
+  const result = (await submitRes.json()) as Judge0SubmissionResult;
+  if (!result?.status) {
     return NextResponse.json(
       { error: "No result returned from Judge0." },
       { status: 502 }
     );
   }
 
-  const stdout = fromBase64Utf8(result.stdout);
+  const stdout = decodeJudge0TextField(result.stdout);
   const stderr =
-    fromBase64Utf8(result.stderr) || fromBase64Utf8(result.compile_output);
+    decodeJudge0TextField(result.stderr) ||
+    decodeJudge0TextField(result.compile_output);
   const status = result.status;
 
   let tests: ChallengeTestCase[] | undefined;
@@ -151,7 +131,18 @@ export async function POST(req: Request) {
     }
   }
 
-  // Do not leak raw JSON runner output to the client when structured tests are returned.
+  if (challengeId === 1) {
+    tests = [
+      {
+        name: "Exact output",
+        passed: correct,
+        expected: "Hello, World!",
+        got: stdout.trim()
+      }
+    ];
+  }
+
+  // Challenge 2: hide raw JSON harness output when structured tests are returned.
   const stdoutForClient =
     challengeId === 2 && tests && tests.length > 0 ? "" : stdout;
 

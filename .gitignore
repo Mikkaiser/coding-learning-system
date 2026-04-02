@@ -8,5 +8,6 @@
 **/yarn-error.log*
 **/.env*.local
 judge0.conf
+data/
 
 
