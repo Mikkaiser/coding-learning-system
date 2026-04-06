@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Image from "next/image";
+import { setLoginWelcomeFlag } from "@/components/PostLoginWelcomeToast";
 import logo from "@/public/images/logo-mikkaiser-coder.png";
 
 export default function LoginPage() {
@@ -44,7 +45,11 @@ export default function LoginPage() {
       const me = (await fetch("/api/auth/me").then((r) => r.json()).catch(() => null)) as
         | { user?: { role?: "admin" | "student" } | null }
         | null;
-      if (me?.user?.role === "admin") {
+      const role = me?.user?.role;
+      if (role === "admin" || role === "student") {
+        setLoginWelcomeFlag({ role });
+      }
+      if (role === "admin") {
         router.replace("/admin/dashboard");
       } else {
         router.replace("/challenges");

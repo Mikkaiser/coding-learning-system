@@ -5,6 +5,17 @@ import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 function isPublicPath(pathname: string) {
   if (pathname === "/login") return true;
   if (pathname.startsWith("/api/auth")) return true;
+  if (pathname === "/site.webmanifest") return true;
+  if (
+    pathname === "/favicon.ico" ||
+    pathname === "/favicon-16x16.png" ||
+    pathname === "/favicon-32x32.png" ||
+    pathname === "/apple-touch-icon.png" ||
+    pathname === "/android-chrome-192x192.png" ||
+    pathname === "/android-chrome-512x512.png"
+  ) {
+    return true;
+  }
   return false;
 }
 

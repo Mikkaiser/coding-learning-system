@@ -10,7 +10,9 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "build:favicon": "node scripts/build-favicon.mjs",
+    "build:favicon:force": "node scripts/build-favicon.mjs --force"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -34,7 +36,9 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.25",
+    "png-to-ico": "^3.0.1",
     "postcss": "^8.5.3",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
   }
