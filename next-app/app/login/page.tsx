@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import Image from "next/image";
 import logo from "@/public/images/logo-mikkaiser-coder.png";
 
@@ -55,6 +56,11 @@ export default function LoginPage() {
     }
   }
 
+  async function onSubmitForm(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await submit();
+  }
+
   return (
     <main className="container-app flex flex-1 flex-col justify-center py-10">
       <div className="mx-auto w-full max-w-md">
@@ -73,66 +79,69 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold tracking-tight text-fg">Sign in</h1>
           <p className="mt-1 text-base text-muted">Use your account credentials.</p>
 
-          <div className="mt-6 space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-muted">
-                Username
-              </label>
-              <input
-                id="username"
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="input mt-1"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-muted">
-                Password
-              </label>
-              <div className="relative mt-1">
+          <form className="mt-6" onSubmit={onSubmitForm} noValidate>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-muted">
+                  Username
+                </label>
                 <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input pr-12"
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="input mt-1"
                 />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-muted">
+                  Password
+                </label>
+                <div className="relative mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center rounded-r-lg text-sm font-semibold text-muted transition hover:text-fg"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {error ? (
+              <p className="mt-3 text-base text-danger" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            <div className="mt-6 w-full">
+              <div className="glow-wrap w-full">
+                <div className="glow" aria-hidden="true" />
+                <div className="border-ring" aria-hidden="true">
+                  <div className="border-ring-inner" />
+                </div>
                 <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center rounded-r-lg text-sm font-semibold text-muted transition hover:text-fg"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  type="submit"
+                  disabled={busy}
+                  className="btn btn-primary relative z-0 w-full rounded-full"
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {busy ? "Signing in…" : "Sign in"}
                 </button>
               </div>
             </div>
-          </div>
-
-          {error ? (
-            <p className="mt-3 text-base text-danger" role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          <div className="mt-6 w-full">
-            <div className="glow-wrap w-full">
-              <div className="glow" aria-hidden="true" />
-              <div className="border-ring" aria-hidden="true">
-                <div className="border-ring-inner" />
-              </div>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={submit}
-                className="btn btn-primary relative z-0 w-full rounded-full"
-              >
-                {busy ? "Signing in…" : "Sign in"}
-              </button>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </main>
