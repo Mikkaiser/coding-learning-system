@@ -1,6 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getAdminDashboardPayload } from "@/lib/admin-dashboard-data";
 import { CHALLENGES } from "@/lib/challenges/catalog";
+import { SITE_NAME, defaultOpenGraph, defaultTwitter } from "@/lib/seo";
+
+const pageTitle = "Dashboard";
+const pageDesc =
+  "View class-wide progress, module completion stats, and per-student challenge activity for your Mikkaiser Coder classroom.";
+
+export const metadata: Metadata = {
+  title: pageTitle,
+  description: pageDesc,
+  openGraph: defaultOpenGraph({
+    title: `${pageTitle} | Admin | ${SITE_NAME}`,
+    description: pageDesc,
+    path: "/admin/dashboard"
+  }),
+  twitter: defaultTwitter({
+    title: `${pageTitle} | Admin | ${SITE_NAME}`,
+    description: pageDesc
+  }),
+  alternates: { canonical: "/admin/dashboard" }
+};
 
 function ProgressBar({ percent }: { percent: number }) {
   return (

@@ -1,9 +1,30 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getChallengeProgress } from "@/lib/completions";
 import { CHALLENGES, getModule, MODULES } from "@/lib/challenges/catalog";
 import type { ModuleDefinition } from "@/lib/challenges/types";
+import { SITE_NAME, defaultOpenGraph, defaultTwitter } from "@/lib/seo";
 import { getSessionUser } from "@/lib/server/session";
+
+const pageTitle = "Course modules";
+const pageDesc =
+  "Browse Python learning modules, unlock challenges in order, and track your progress across the full Mikkaiser Coder curriculum.";
+
+export const metadata: Metadata = {
+  title: pageTitle,
+  description: pageDesc,
+  openGraph: defaultOpenGraph({
+    title: `${pageTitle} | ${SITE_NAME}`,
+    description: pageDesc,
+    path: "/challenges"
+  }),
+  twitter: defaultTwitter({
+    title: `${pageTitle} | ${SITE_NAME}`,
+    description: pageDesc
+  }),
+  alternates: { canonical: "/challenges" }
+};
 
 type ModuleStatus = "locked" | "in-progress" | "completed";
 

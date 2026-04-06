@@ -1,10 +1,15 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "loginWelcome";
 
+/** After login, ignore stale flags on /login longer than this (ms). */
+const STALE_ON_LOGIN_MS = 60_000;
+
 export function PostLoginWelcomeToast() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -12,11 +17,30 @@ export function PostLoginWelcomeToast() {
     if (typeof window === "undefined") return;
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return;
+
+    let ts = 0;
+    let data: { message?: string; role?: string; ts?: number } = {};
+    try {
+      data = JSON.parse(raw) as { message?: string; role?: string; ts?: number };
+      ts = typeof data.ts === "number" ? data.ts : 0;
+    } catch {
+      sessionStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+
+    const age = Date.now() - ts;
+
+    if (pathname === "/login") {
+      if (age > STALE_ON_LOGIN_MS) {
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
+      return;
+    }
+
     sessionStorage.removeItem(STORAGE_KEY);
 
     let msg = "Signed in successfully!";
     try {
-      const data = JSON.parse(raw) as { message?: string; role?: string };
       if (typeof data.message === "string") {
         msg = data.message;
       } else if (data.role === "admin") {
@@ -32,7 +56,7 @@ export function PostLoginWelcomeToast() {
     setOpen(true);
     const t = window.setTimeout(() => setOpen(false), 4200);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [pathname]);
 
   if (!open || !message) return null;
 
@@ -57,6 +81,7 @@ export function setLoginWelcomeFlag(payload: { role: "admin" | "student" }) {
   sessionStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
+      ts: Date.now(),
       role: payload.role,
       message:
         payload.role === "admin"
@@ -64,4 +89,9 @@ export function setLoginWelcomeFlag(payload: { role: "admin" | "student" }) {
           : "You’re in! Welcome back — pick up where you left off."
     })
   );
+}
+
+export function clearLoginWelcomeFlag() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(STORAGE_KEY);
 }

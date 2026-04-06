@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { clearLoginWelcomeFlag } from "@/components/PostLoginWelcomeToast";
 import { LogoLinkToChallenges } from "@/components/LogoLinkToChallenges";
 
 type SessionUser = {
@@ -30,6 +31,7 @@ export function Navbar({ initialUser }: { initialUser?: SessionUser | null }) {
   }, [initialUser]);
 
   async function signOut() {
+    clearLoginWelcomeFlag();
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     setUser(null);
     window.location.href = "/login";
