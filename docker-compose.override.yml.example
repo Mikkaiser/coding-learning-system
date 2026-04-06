@@ -1,0 +1,65 @@
+# Local development overrides.
+# Copy this file to docker-compose.override.yml (gitignored) and adjust as needed.
+# Docker Compose auto-merges docker-compose.override.yml on every `docker compose` command.
+#
+# Also set DB_VOLUMES_BASE in your .env (or export it) if you want a custom data path.
+# Default when unset: ./data  (relative to project root)
+
+services:
+  db:
+    restart: "no"
+
+  redis:
+    restart: "no"
+
+  server:
+    restart: "no"
+    ports:
+      - "2358:2358"
+
+  workers:
+    restart: "no"
+
+  app-db:
+    restart: "no"
+    ports:
+      - "5433:5432"
+
+  next-app:
+    restart: "no"
+    ports:
+      - "3000:3000"
+
+  # Dev server with hot reload (Windows-friendly polling).
+  # Visit: http://localhost:3001
+  next-app-dev:
+    build:
+      context: ./next-app
+      dockerfile: Dockerfile.dev
+    container_name: coding-learning-system-web-dev
+    ports:
+      - "3001:3000"
+    env_file:
+      - ./.env
+    environment:
+      APP_DATABASE_URL: postgres://app:${APP_POSTGRES_PASSWORD}@app-db:5432/app
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - ./next-app:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      server:
+        condition: service_started
+      app-db:
+        condition: service_healthy
+    networks:
+      - judge0_net
+
+# coding-learning-network is external (nginx) on the server.
+# Locally it doesn't exist, so override it to be created automatically.
+networks:
+  coding-learning-network:
+    external: false

@@ -4,26 +4,27 @@ services:
   db:
     image: postgres:13
     container_name: postgres-db-judge0
+    restart: always
     environment:
       POSTGRES_DB: judge0
       POSTGRES_USER: judge0
       POSTGRES_PASSWORD: ${JUDGE0_POSTGRES_PASSWORD}
     volumes:
-      - ./data/judge0-db:/var/lib/postgresql/data
+      - ${DB_VOLUMES_BASE:-./data}/judge0-db:/var/lib/postgresql/data
     networks:
       - judge0_net
 
   redis:
     image: redis:6
     container_name: redis-judge0
+    restart: always
     networks:
       - judge0_net
 
   server:
     image: judge0/judge0:latest
     container_name: judge0-server
-    ports:
-      - "2358:2358"
+    restart: always
     environment:
       REDIS_HOST: redis
       POSTGRES_HOST: db
@@ -41,6 +42,7 @@ services:
   workers:
     image: judge0/judge0:latest
     container_name: judge0-workers
+    restart: always
     environment:
       REDIS_HOST: redis
       POSTGRES_HOST: db
@@ -64,9 +66,7 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD}
     volumes:
-      - ./data/app-db:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
+      - ${DB_VOLUMES_BASE:-./data}/app-db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app"]
       interval: 5s
@@ -80,12 +80,10 @@ services:
       context: ./next-app
       dockerfile: Dockerfile
     container_name: coding-learning-system-web
-    ports:
-      - "3000:3000"
+    restart: always
     env_file:
       - ./.env
     environment:
-      # Inside Docker, DB host must be the service name (not localhost).
       APP_DATABASE_URL: postgres://app:${APP_POSTGRES_PASSWORD}@app-db:5432/app
     depends_on:
       server:
@@ -94,37 +92,10 @@ services:
         condition: service_healthy
     networks:
       - judge0_net
-
-  # Dev server with hot reload (Windows-friendly polling).
-  # Visit: http://localhost:3001
-  next-app-dev:
-    build:
-      context: ./next-app
-      dockerfile: Dockerfile.dev
-    container_name: coding-learning-system-web-dev
-    ports:
-      - "3001:3000"
-    env_file:
-      - ./.env
-    environment:
-      # Inside Docker, DB host must be the service name (not localhost).
-      APP_DATABASE_URL: postgres://app:${APP_POSTGRES_PASSWORD}@app-db:5432/app
-      WATCHPACK_POLLING: "true"
-      CHOKIDAR_USEPOLLING: "true"
-      NEXT_TELEMETRY_DISABLED: "1"
-    volumes:
-      - ./next-app:/app
-      - /app/node_modules
-      - /app/.next
-    depends_on:
-      server:
-        condition: service_started
-      app-db:
-        condition: service_healthy
-    networks:
-      - judge0_net
+      - coding-learning-network
 
 networks:
   judge0_net:
     name: judge0_net
-
+  coding-learning-network:
+    external: true
