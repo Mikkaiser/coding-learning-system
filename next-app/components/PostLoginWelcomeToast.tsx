@@ -16,7 +16,11 @@ export function PostLoginWelcomeToast() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+    if (!raw) {
+      setOpen(false);
+      setMessage("");
+      return;
+    }
 
     let ts = 0;
     let data: { message?: string; role?: string; ts?: number } = {};

@@ -32,6 +32,12 @@ html {
   font-size: 120%;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @layer base {
   body {
     @apply bg-bg text-fg antialiased;

@@ -38,7 +38,7 @@ export function Navbar({ initialUser }: { initialUser?: SessionUser | null }) {
   }
 
   return (
-    <nav className="border-b border-border bg-surface/70 backdrop-blur">
+    <nav className="sticky top-0 z-50 w-full shrink-0 border-b border-border bg-surface/90 backdrop-blur-md">
       <div className="container-app flex items-center justify-between gap-4 py-3">
         <LogoLinkToChallenges variant="navbar" />
         <div className="flex items-center gap-3">
