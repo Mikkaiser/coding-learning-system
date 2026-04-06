@@ -38,12 +38,24 @@ export default async function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-fg">Admin dashboard</h1>
           <p className="mt-2 text-base text-muted">
-            Track student progress across {totalChallenges} challenges.
+            Track student progress across {totalChallenges} challenges.{" "}
+            <Link
+              href="/challenges"
+              className="font-medium text-brand-accent underline-offset-4 hover:text-fg hover:underline"
+            >
+              View course modules
+            </Link>{" "}
+            (same page students use).
           </p>
         </div>
-        <Link href="/admin/students" className="btn btn-secondary h-control-md px-4">
-          Manage students
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/challenges" className="btn btn-secondary h-control-md px-4">
+            Course modules
+          </Link>
+          <Link href="/admin/students" className="btn btn-secondary h-control-md px-4">
+            Manage students
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">

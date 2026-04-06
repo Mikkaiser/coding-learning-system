@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Python coding challenges with Judge0"
 };
 
+/** Server-render HTML on each request (auth-aware layouts use cookies). */
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">

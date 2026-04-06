@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Avatar } from "@/components/Avatar";
-import logo from "@/public/images/logo-mikkaiser-coder.png";
+import { LogoLinkToChallenges } from "@/components/LogoLinkToChallenges";
 
 type SessionUser = {
   id: string;
@@ -38,20 +37,7 @@ export function Navbar({ initialUser }: { initialUser?: SessionUser | null }) {
   return (
     <nav className="border-b border-border bg-surface/70 backdrop-blur">
       <div className="container-app flex items-center justify-between gap-4 py-3">
-        <Link
-          href="/challenges"
-          className="flex items-center text-base font-semibold tracking-tight text-fg"
-        >
-          <Image
-            src={logo}
-            alt="Mikkaiser Coder logo"
-            width={180}
-            height={48}
-            priority
-            sizes="(max-width: 768px) 140px, 180px"
-            className="h-8 w-auto sm:h-9"
-          />
-        </Link>
+        <LogoLinkToChallenges variant="navbar" />
         <div className="flex items-center gap-3">
           {user ? (
             <>
