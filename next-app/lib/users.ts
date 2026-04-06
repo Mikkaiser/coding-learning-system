@@ -206,6 +206,36 @@ export async function updateUserEmail(userId: string, rawEmail: string) {
   };
 }
 
+const MIN_PASSWORD_LENGTH = 8;
+
+export async function updateOwnPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    return {
+      ok: false as const,
+      error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+    };
+  }
+
+  const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const row = rows[0];
+  if (!row || (row.role !== "admin" && row.role !== "student")) {
+    return { ok: false as const, error: "User not found." };
+  }
+
+  const match = await bcrypt.compare(currentPassword, row.passwordHash);
+  if (!match) {
+    return { ok: false as const, error: "Current password is incorrect." };
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+  return { ok: true as const };
+}
+
 export async function deleteStudent(id: string) {
   const deleted = await db
     .delete(users)
